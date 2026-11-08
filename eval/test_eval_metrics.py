@@ -55,10 +55,10 @@ def test_summary_and_gates():
 
 def test_verified_draft_subset_and_mix():
     import yaml
-    qs = yaml.safe_load(Path(__file__).with_name('golden.draft.yaml').read_text())['questions']
+    qs = yaml.safe_load(Path(__file__).with_name('golden.yaml').read_text())['questions']
     assert len(qs) == 15
     ev.validate_mix(qs)
-    assert [q['id'] for q in qs if q.get('review_required')] == ['q09', 'q10', 'q14']
+    assert [q['id'] for q in qs if q.get('review_required')] == []
     assert ev.recall_at_k([{'source': 'academic-rules-handbook-jun-2026.pdf', 'page': 10}],
                            [{'source': 'academic-rules-handbook-jun-2026.pdf', 'page': 10,
                              'section': 'Unheaded section'}], 1) == 1.0
