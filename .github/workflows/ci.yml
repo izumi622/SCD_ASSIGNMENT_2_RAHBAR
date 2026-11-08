@@ -1,0 +1,138 @@
+name: CI
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [dev]
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install lint tools
+        run: python -m pip install ruff==0.11.8 mypy==1.15.0
+      - name: Ruff (syntax, undefined names and major errors)
+        run: ruff check api/app indexer/pipeline eval scripts --select E4,E9,F63,F7,F82
+      - name: Mypy (typed configuration boundary)
+        run: mypy api/app/config.py indexer/pipeline/config.py --follow-imports=skip --ignore-missing-imports
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned development dependencies
+        run: |
+          python -m pip install -r api/requirements-dev.txt -r indexer/requirements-dev.txt
+          python -m pip install pytest-cov==6.1.1
+      - name: API unit tests and 60% coverage gate
+        working-directory: api
+        run: python -m pytest tests -q --cov=app --cov-report=term-missing --cov-fail-under=60
+      - name: Indexer tests
+        working-directory: indexer
+        run: python -m pytest tests -q
+      - name: Evaluator tests
+        run: python -m pytest -q eval/test_eval_metrics.py
+      - name: Fixture embeddings are deterministic (never production)
+        run: |
+          python - <<'PY'
+          import sys
+          sys.path.insert(0,'scripts')
+          from fixture_embed_server import vector
+          a=vector('academic warning minimum CGPA 2.00')
+          b=vector('academic warning minimum CGPA 2.00')
+          assert a == b and len(a)==768 and abs(sum(x*x for x in a)-1)<1e-9
+          assert vector('hostel') != vector('academic attendance')
+          PY
+
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.33.4'
+      - name: Install kubeconform
+        run: |
+          curl -fsSL https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-linux-amd64.tar.gz \
+            | sudo tar xz -C /usr/local/bin kubeconform
+      - name: Strict Kustomize and fixture manifest validation
+        run: |
+          kubectl kustomize k8s/overlays/prod | kubeconform -strict -summary
+          kubeconform -strict -summary k8s/base/indexer-job.yaml k8s/ci/fixture-embed.yaml
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, test, manifests]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image (no push on PR)
+        run: docker build -t rahbar-api:ci api
+      - name: Build indexer image (no push on PR)
+        run: docker build -t rahbar-indexer:ci indexer
+      - name: Build UI image (no push on PR)
+        run: docker build -t rahbar-ui:ci ui
+
+  scan:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild images in isolated scanning job
+        run: |
+          docker build -t rahbar-api:ci api
+          docker build -t rahbar-indexer:ci indexer
+          docker build -t rahbar-ui:ci ui
+      - name: Trivy API high/critical fixable vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: rahbar-api:ci
+          format: table
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+      - name: Trivy indexer high/critical fixable vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: rahbar-indexer:ci
+          format: table
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+      - name: Trivy UI high/critical fixable vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: rahbar-ui:ci
+          format: table
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+
+  e2e-eval:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install fixture evaluation dependencies
+        run: python -m pip install httpx==0.28.1 pyyaml==6.0.2
+      - uses: helm/kind-action@v1.14.0
+        with:
+          cluster_name: kind
+      - name: Build fixture cluster images
+        run: |
+          docker build -t rahbar-api:ci api
+          docker build -t rahbar-indexer:ci indexer
+          docker build -t rahbar-ui:ci ui
+      - name: Real fixture indexing and e2e evaluation (no hosted LLM)
+        run: bash scripts/ci_fixture_cluster.sh rahbar-api:ci rahbar-ui:ci rahbar-indexer:ci
