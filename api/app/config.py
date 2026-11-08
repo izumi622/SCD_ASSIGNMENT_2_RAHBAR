@@ -31,6 +31,8 @@ class Settings:
     # Vector store
     chroma_host: str = "chroma"
     chroma_port: int = 8000
+    redis_host: str = "redis"
+    redis_port: int = 6379
     collection: str = "rahbar"
 
     # Retrieval and generation
@@ -51,6 +53,8 @@ def get_settings() -> Settings:
         embed_model=os.environ.get("EMBED_MODEL", "nomic-embed-text"),
         chroma_host=os.environ.get("CHROMA_HOST", "chroma"),
         chroma_port=_int("CHROMA_PORT", 8000),
+        redis_host=os.environ.get("REDIS_HOST", "redis"),
+        redis_port=_int("REDIS_PORT", 6379),
         collection=os.environ.get("CHROMA_COLLECTION", "rahbar"),
         top_k=_int("TOP_K", 5),
         temperature=_float("TEMPERATURE", 0.2),

@@ -32,8 +32,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.settings = settings
     app.state.retriever = get_retriever(settings)
     app.state.provider = get_provider(settings)
-    # STARTER-TODO(4.4): compare the collection's embedding-model metadata with
-    # settings.embed_model here, and make /readyz fail on a mismatch.
+    # Startup must never wait for Chroma or Redis. In particular, do not run
+    # synchronous network calls inside this async lifespan handler: when a
+    # dependency is slow, Uvicorn never finishes startup and the startupProbe
+    # repeatedly kills the pod. /healthz is dependency-free, while /readyz
+    # checks Chroma/Redis and the embedding-model pin on every probe; it returns
+    # 503 until the required services and nonempty compatible index exist.
     # This process only reads the index. The indexer Job writes it.
     log.info(
         "api started",
