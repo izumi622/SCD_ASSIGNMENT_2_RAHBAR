@@ -1,0 +1,4 @@
+NAME                   STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+chroma-data-chroma-0   Bound    pvc-13e1732b-cf3a-4724-9925-8c50da72f1e7   2Gi        RWO            standard       <unset>                 7h33m
+corpus-data            Bound    pvc-d8dbe307-d5e3-43b4-80b5-00bc16799c69   512Mi      RWO            standard       <unset>                 6h14m
+redis-data             Bound    pvc-7317e7cd-f969-4d90-ad46-fa0f723d72be   1Gi        RWO            standard       <unset>                 7h33m

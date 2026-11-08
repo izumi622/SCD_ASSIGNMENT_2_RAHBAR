@@ -1,0 +1,8 @@
+NAME                            STATUS     COMPLETIONS   DURATION   AGE
+job.batch/indexer-initial       Complete   1/1           24m        7h33m
+job.batch/real-index-2          Failed     0/1           6h9m       6h9m
+job.batch/real-index-debug-1    Failed     0/1           5h25m      5h25m
+job.batch/real-index-lowmem-1   Complete   1/1           4m6s       5h10m
+
+NAME                    SCHEDULE    TIMEZONE   SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+cronjob.batch/reindex   0 3 * * 0   <none>     False     0        <none>          7h29m
