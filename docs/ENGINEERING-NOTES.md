@@ -1,18 +1,31 @@
-# Engineering notes
+# Seven engineering questions — answers tied to RAHBAR's actual source
 
-<!-- STARTER-TODO(7): answer all seven questions from section 7 of the case study, each
-     pointing to your own files and line numbers. A generic answer scores zero. -->
+These answers describe the **implemented project** and the terminal results shared on 8 November 2026. Measurements not captured by the team are marked as such rather than fabricated.
 
-## 1. Indexing in API startup: what breaks with 3 replicas and one Chroma volume?
+## 1. Why not run indexing inside each of the three API replicas?
 
-## 2. Readiness and liveness swapped, Chroma slow for 90 seconds: what happens?
+`k8s/base/api.yaml:19` requests **three API pods** and the API process instantiates a retriever/provider, not an indexer (`api/app/main.py:29-45`). The actual `indexer/pipeline/run.py:66-87` extracts and embeds documents, and `indexer/pipeline/store.py:16-40` writes the shared Chroma collection. If indexing were moved into the API startup path, three independent processes could concurrently replace/upsert the same collection, causing duplicate work, partial reads, race conditions and broken readiness during rolling updates. RAHBAR uses a single one-shot `Job` (`k8s/base/indexer-job.yaml`) and a `CronJob` (`k8s/base/reindex-cronjob.yaml`) separate from the API. `k8s/base/chroma.yaml:74-81` provisions the single Chroma StatefulSet's persistent data volume. Re-indexing does not require an API redeploy.
 
-## 3. What does a CPU-based HPA measure on a generation service, and what should scale it?
+## 2. What if readiness and liveness are swapped and Chroma is slow for 90 seconds?
 
-## 4. The indexer's peak memory, its limit, the margin, and the exit code when it is wrong
+The current liveness probe checks dependency-free `/healthz` (`k8s/base/api.yaml:61-67`); readiness checks `/readyz` (`k8s/base/api.yaml:68-74`), whose implementation checks the nonempty Chroma collection, embedding-model metadata and Redis (`api/app/routes/health.py:21-62`). When Chroma is slow, readiness removes the affected API pods from service endpoints without killing the processes. If liveness depended on Chroma, all three API pods could be killed and restarted repeatedly after probe failures, and the cluster could enter a synchronized restart loop despite healthy Python processes. This amplifies a temporary Chroma slowdown into an API outage.
 
-## 5. recall@5 by question type: where is it worst, and why?
+## 3. What does CPU-based HPA measure during model generation?
 
-## 6. EMBED_MODEL changed on the API only: what does your system do?
+`k8s/base/hpa.yaml:1-18` configures a 70%-CPU-utilization target and min 3 / max 8 replicas. Utilization is a percent of each API container's CPU **request**, configured in `k8s/base/api.yaml:79-88`. With **Ollama running on the Windows host**, the API often waits on network I/O while the model generates. Host-side LLM work is not charged to the API container's CPU usage, so CPU-based HPA can miss user-facing queueing and latency. Better signals would be in-flight generation requests, p95 API request latency or actual Ollama queue length. To use them for HPA would require adding/exposing appropriate metrics, a Prometheus adapter/KEDA, and an HPA custom/external-metric target; the current project does **not** implement this adapter.
 
-## 7. The failure that cost us more than an hour
+## 4. Indexer peak memory, limit, margin and wrong exit code
+
+The real indexer currently has a **1200Mi memory limit** and **256Mi memory request** in both the one-shot Job (`k8s/base/indexer-job.yaml`) and weekly CronJob (`k8s/base/reindex-cronjob.yaml`). During earlier local trials the student encountered **`OOMKilled` / exit code 137**, prompting per-page memory-bounded OCR and higher limits. The precise **measured peak** from `kubectl top pods -n rahbar` has not been supplied, so **the safety margin is unknown**, not 1200Mi. To finish this answer, capture a real indexing run's maximum resident usage and compute `margin = 1200 Mi - measured_peak_Mi`; attach terminal evidence. The memory request is for scheduling and is not the same as the limit.
+
+## 5. Worst recall@5 category and the fix for exact wording
+
+The student's final 15-question strict evaluation reported **recall@5 = 1.0 overall**, and the previous run's q01–q15 answers all retrieved relevant evidence. There is **no measured worse category** in that final tiny golden set: claiming one would fabricate data. Before the hybrid fix, exact-term and policy questions were vulnerable because semantically similar explanations could outrank the exact clause. The implemented solution is to blend embedding cosine similarity and lexical matching (`api/app/retrieval/chroma.py:92-104`), use metadata filtering (`:78-88`), and validate citations (`api/app/services/answer.py:64-90`). A larger independent test set would make category-specific differences more apparent.
+
+## 6. API changes EMBED_MODEL without re-indexing
+
+The ConfigMap sets `EMBED_MODEL=nomic-embed-text` (`k8s/base/configmap.yaml`). The writer records the model name and vector dimension in Chroma metadata (`indexer/pipeline/store.py:16-30`). `/readyz` checks that metadata against the API's configured model (`api/app/routes/health.py:35-48`), and the retriever refuses a mismatched model/dimension before querying (`api/app/retrieval/chroma.py:50-78`). If an operator changes only the API's model and restarts it, the pod becomes unready and the query path rejects the mismatched vectors. Without this guardrail, embedding vectors from different spaces could produce plausible-looking, incorrect retrieval and forged confidence. The correct recovery is to restore the original model or perform a controlled re-index/migration, **not** disable the readiness check.
+
+## 7. A difficult failure and how it was diagnosed
+
+An early full evaluation produced `recall@5=1.0` and valid citation metadata while **q07 answered “The retrieved evidence does not support a reliable numerical answer”**. Initially the team reasonably suspected retrieval quality or an invalid source, but the saved `eval/results.json` showed page **22** of the 2026 handbook in the top retrieved chunks. Inspection revealed that one chunk ended at **“for up to”** and another started **“2 semesters”**. The exact diagnostic commands were an inspection of `eval/results.json`'s `per_question` q07 retrieved IDs/pages and the corresponding source extracts. This was a *chunk-boundary/numeric-grounding* problem, not missing policy text. A same-page reconstruction alone did not solve it; the successful change was a narrow extractive fallback that cites the retrieved page only when an exact, high-confidence limit is supported. The student's `q07-extract1.json` live result then returned **up to 2 semesters** with a valid page-22 citation, and the final 15-question strict gate passed. The team should add timestamps if claiming this exact incident consumed more than an hour; that duration has **not** been established from the logs supplied here.

@@ -1,0 +1,2 @@
+NAME   READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                SELECTOR
+api    3/3     3            3           7h33m   api          rahbar-api:extract1   app=api

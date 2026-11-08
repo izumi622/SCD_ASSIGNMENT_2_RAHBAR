@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+# Docker images are overridden with immutable, full-commit-SHA tags by
+# scripts/render_ci_manifests.py in the ephemeral CI/CD verification cluster.
+# For long-lived production, deploy SHA-tagged images explicitly; do not apply
+# this overlay unchanged and claim the local development tags were published.
+# The real indexer Job is intentionally applied *after* corpus PVC population.

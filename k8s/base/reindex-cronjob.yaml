@@ -1,0 +1,72 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: reindex
+spec:
+  schedule: 0 3 * * 0
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: indexer
+        spec:
+          serviceAccountName: rahbar-indexer
+          automountServiceAccountToken: false
+          restartPolicy: OnFailure
+          initContainers:
+          - name: wait-for-chroma
+            image: busybox:1.37.0
+            command:
+            - /bin/sh
+            - -c
+            args:
+            - "i=0\nuntil wget -q -O - http://chroma:8000/api/v2/heartbeat >/dev/null\
+              \ 2>&1; do\n  i=$((i+1))\n  if [ \"$i\" -ge 120 ]; then echo \"Chroma\
+              \ not ready\"; exit 1; fi\n  sleep 2\ndone\n"
+            resources:
+              requests:
+                cpu: 5m
+                memory: 8Mi
+              limits:
+                cpu: 100m
+                memory: 32Mi
+          containers:
+          - name: indexer
+            image: rahbar-indexer:lowmem1
+            imagePullPolicy: IfNotPresent
+            args: []
+            envFrom:
+            - configMapRef:
+                name: rahbar-config
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 10001
+              readOnlyRootFilesystem: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                cpu: 700m
+                memory: 1200Mi
+            volumeMounts:
+            - name: corpus
+              mountPath: /corpus
+            - name: indexer-tmp
+              mountPath: /tmp
+          volumes:
+          - name: corpus
+            persistentVolumeClaim:
+              claimName: corpus-data
+          - name: indexer-tmp
+            emptyDir:
+              sizeLimit: 1Gi

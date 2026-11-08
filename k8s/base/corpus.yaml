@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: corpus-data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 512Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: corpus-loader
+  labels:
+    app: corpus-loader
+spec:
+  serviceAccountName: rahbar-indexer
+  automountServiceAccountToken: false
+  enableServiceLinks: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    fsGroup: 10001
+  containers:
+    - name: loader
+      image: alpine:3.21
+      imagePullPolicy: IfNotPresent
+      command: ["/bin/sh", "-c", "sleep 2147483647"]
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities: {drop: [ALL]}
+      volumeMounts:
+        - {name: corpus, mountPath: /corpus}
+      resources:
+        requests: {cpu: 5m, memory: 16Mi}
+        limits: {cpu: 100m, memory: 64Mi}
+  volumes:
+    - name: corpus
+      persistentVolumeClaim:
+        claimName: corpus-data

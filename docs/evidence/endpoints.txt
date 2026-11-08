@@ -1,0 +1,6 @@
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME     ENDPOINTS                                                  AGE
+api      10.244.120.79:8000,10.244.120.81:8000,10.244.120.83:8000   7h33m
+chroma   10.244.120.99:8000                                         7h33m
+redis    10.244.120.102:6379                                        7h33m
+ui       10.244.120.100:8080                                        7h33m

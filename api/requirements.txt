@@ -1,12 +1,13 @@
-# Pinned: an unpinned dependency is the drift problem from Lecture 04.
-fastapi==0.115.12
+# Explicit versions to keep container builds reproducible.
+# FastAPI >= 0.133 supports Starlette 1.x. Trivy flagged Starlette 0.46.2.
+fastapi==0.162.2
+starlette==1.10.0
 uvicorn==0.34.2
 pydantic==2.11.4
 httpx==0.28.1
 prometheus-client==0.21.1
-# Thin HTTP client for the Chroma server. Run the chromadb/chroma image with the SAME
-# version (1.0.12): a client and server from different versions may not talk.
+# Use the same Chroma server/client version.
 chromadb-client==1.0.12
-# chromadb-client 1.0.12 prints telemetry errors with posthog 6+; this pin silences them.
+# Maintain compatibility with Chroma's telemetry.
 posthog==5.4.0
 redis==5.2.1

@@ -1,0 +1,8 @@
+NAME                     CPU(cores)   MEMORY(bytes)   
+api-7fb684c8df-f8hnk     6m           280Mi           
+api-7fb684c8df-sfcgl     5m           281Mi           
+api-7fb684c8df-tpns8     6m           283Mi           
+chroma-0                 2m           924Mi           
+corpus-loader            0m           1Mi             
+redis-57fcdbcc88-8khkr   7m           8Mi             
+ui-56749696ff-zqn6m      1m           3Mi             
