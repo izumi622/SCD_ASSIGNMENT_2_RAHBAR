@@ -38,7 +38,7 @@ spec:
         runAsUser: 10001
       containers:
         - name: api
-          image: rahbar-api:startupfix1
+          image: rahbar-api:extract1
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -56,18 +56,21 @@ spec:
               path: /healthz
               port: http
             periodSeconds: 2
+            timeoutSeconds: 5
             failureThreshold: 30
           livenessProbe:
             httpGet:
               path: /healthz
               port: http
             periodSeconds: 20
+            timeoutSeconds: 5
             failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /readyz
               port: http
-            periodSeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 5
             failureThreshold: 3
           lifecycle:
             preStop:
@@ -75,11 +78,11 @@ spec:
                 command: ["/bin/sh", "-c", "sleep 5"]
           resources:
             requests:
-              cpu: 100m
-              memory: 160Mi
+              cpu: 250m
+              memory: 256Mi
             limits:
               cpu: 500m
-              memory: 512Mi
+              memory: 768Mi
           volumeMounts:
             - name: tmp
               mountPath: /tmp

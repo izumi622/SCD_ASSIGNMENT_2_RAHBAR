@@ -75,7 +75,11 @@ def run_pipeline(settings: IndexerSettings) -> int:
         raise SystemExit(f"no documents found in {settings.corpus_dir}")
     all_chunks: list[Chunk] = []
     for path, doc_version, superseded in documents:
-        doc = clean(extract(str(path), doc_version, superseded))
+        log('extracting', source=path.name)
+        def progress(page: int, total: int, ocr: bool) -> None:
+            if page == 1 or page % 10 == 0 or page == total:
+                log('pdf progress', source=path.name, page=page, pages=total, ocr=ocr)
+        doc = clean(extract(str(path), doc_version, superseded, progress=progress))
         pieces = chunk(doc, settings.chunk_size, settings.chunk_overlap)
         log("chunked", source=path.name, chunks=len(pieces))
         all_chunks.extend(pieces)

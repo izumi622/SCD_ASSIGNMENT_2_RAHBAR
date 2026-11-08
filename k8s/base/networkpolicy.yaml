@@ -58,6 +58,10 @@ spec:
       ports:
         - {protocol: TCP, port: 8000}
         - {protocol: TCP, port: 6379}
+    - to:
+        - ipBlock: {cidr: 0.0.0.0/0}
+      ports:
+        - {protocol: TCP, port: 11434}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -73,6 +77,17 @@ spec:
             matchLabels: {app: chroma}
       ports:
         - {protocol: TCP, port: 8000}
+    - to:
+        - podSelector:
+            matchLabels: {app: redis}
+      ports:
+        - {protocol: TCP, port: 6379}
+    # Restrict external egress to Ollama's port. In final deployment,
+    # replace 0.0.0.0/0 with the host IP shown by minikube ssh.
+    - to:
+        - ipBlock: {cidr: 0.0.0.0/0}
+      ports:
+        - {protocol: TCP, port: 11434}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -101,6 +116,7 @@ spec:
   ingress:
     - from:
         - podSelector:
-            matchLabels: {app: api}
+            matchExpressions:
+              - {key: app, operator: In, values: [api, indexer]}
       ports:
         - {protocol: TCP, port: 6379}

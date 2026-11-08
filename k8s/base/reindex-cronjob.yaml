@@ -37,10 +37,9 @@ spec:
                 memory: 32Mi
           containers:
           - name: indexer
-            image: rahbar-indexer:dev
+            image: rahbar-indexer:lowmem1
             imagePullPolicy: IfNotPresent
-            args:
-            - --dummy
+            args: []
             envFrom:
             - configMapRef:
                 name: rahbar-config
@@ -55,7 +54,19 @@ spec:
             resources:
               requests:
                 cpu: 100m
-                memory: 128Mi
+                memory: 256Mi
               limits:
                 cpu: 700m
-                memory: 512Mi
+                memory: 1200Mi
+            volumeMounts:
+            - name: corpus
+              mountPath: /corpus
+            - name: indexer-tmp
+              mountPath: /tmp
+          volumes:
+          - name: corpus
+            persistentVolumeClaim:
+              claimName: corpus-data
+          - name: indexer-tmp
+            emptyDir:
+              sizeLimit: 1Gi

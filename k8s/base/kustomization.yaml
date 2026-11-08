@@ -5,11 +5,11 @@ resources:
   - namespace.yaml
   - serviceaccounts.yaml
   - configmap.yaml
+  - corpus.yaml
   - chroma.yaml
   - redis.yaml
   - api.yaml
   - ui.yaml
-  - indexer-job.yaml
   - reindex-cronjob.yaml
   - ingress.yaml
   - hpa.yaml

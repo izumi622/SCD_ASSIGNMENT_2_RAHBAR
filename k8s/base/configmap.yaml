@@ -3,9 +3,9 @@ kind: ConfigMap
 metadata:
   name: rahbar-config
 data:
-  RETRIEVER: "stub"
-  LLM_PROVIDER: "stub"
-  EMBED_MODEL: "dummy-768"
+  RETRIEVER: "chroma"
+  LLM_PROVIDER: "ollama-host"
+  EMBED_MODEL: "nomic-embed-text"
   CHROMA_HOST: "chroma"
   CHROMA_PORT: "8000"
   CHROMA_COLLECTION: "rahbar"
@@ -17,7 +17,7 @@ data:
   RELEVANCE_FLOOR: "0.30"
   CACHE_THRESHOLD: "0.95"
   TEMPERATURE: "0.2"
-  LLM_MODEL: "llama3.2:3b"
+  LLM_MODEL: "qwen2.5:7b"
   OLLAMA_URL: "http://host.minikube.internal:11434"
   CORPUS_DIR: "/corpus"
   LOG_LEVEL: "INFO"
