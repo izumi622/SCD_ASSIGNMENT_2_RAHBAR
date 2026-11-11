@@ -18,18 +18,34 @@ The Redis cache stores only grounded, cited answers for cacheable questions. Re-
 
 The student terminal showed `GATE PASSED` on the final 15-question `eval/golden.yaml` and strict audit **15/15**; observed `recall_at_3=1.0`, `recall_at_5=1.0`, `citation_validity=1.0`, `abstention_correctness=1.0`, `response_errors=0`. Results were saved to `eval/results.json` and `eval/baseline.json` locally. The tests include eight ordinary, two version-sensitive, two exact, two abstain and one prompt-injection case. The full answers should be reviewed for factual completeness; metadata validity alone is not factuality.
 
-## D. Chunk-size ablation — **measurements not yet run**
+## D. Chunk-size ablation — observed 11 November 2026
 
-The rubric requires three different chunk size/overlap settings tested on **the same nine-document corpus**. Do not treat the following as observed data; they are three experiment configurations to run using a separate Chroma collection or a full controlled re-index with rollback.
+The same nine-document FAST-NUCES corpus was indexed with three **word-based** chunk configurations into separate Chroma collections, leaving the deployed `rahbar` baseline intact. The two alternative indexer Jobs ran successfully in Kubernetes with the pinned `nomic-embed-text` embedding model (768 dimensions). A read-only Python evaluation compared all three collections against `eval/golden.yaml` and retrieved source/page evidence. Recall@5 is computed over the 13 answerable golden questions; the two must-abstain cases have no relevant target passages and are not included in retrieval recall.
 
-| Size (words) | Overlap (words) | Recall@5, final golden | Stored word amplification | Status |
-| ---: | ---: | --- | --- | --- |
-| 200 | 25 | **not measured** | **not measured** | To run |
-| 400 | 50 | 1.0 in production evaluation | **not measured** | Only baseline recall measured |
-| 600 | 75 | **not measured** | **not measured** | To run |
+| Size (words) | Overlap (words) | Collection | Indexed chunks | Stored chunk words | Recall@5 | Stored words / baseline |
+| ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| 200 | 25 | `rahbar_ablation_200_25` | 764 | 78,808 | 1.0000 | 1.040x |
+| 400 | 50 | `rahbar` | 597 | 75,783 | 1.0000 | 1.000x |
+| 600 | 75 | `rahbar_ablation_600_75` | 557 | 73,933 | 1.0000 | 0.976x |
 
-Amplification = total stored chunk word count / total extracted source word count (with overlap). Document the exact scripts, index revision and actual values after running experiments. A 1.0 result for 400/50 **must not** be copied to the other rows.
+The 200/25 Job completed in 129.4 seconds; 600/75 completed in 139.1 seconds. The 400/50 row is the existing production baseline, not a freshly timed Job. All three achieved identical top-five retrieval success on this golden set. Larger chunks decreased stored chunk-word volume by approximately 2.4% compared with baseline; smaller chunks increased it by approximately 4.0%.
 
-## E. Cache-threshold experiment — **measurements not yet run**
+**Measurement boundaries:** stored word counts are the sum of indexed passage words and are a proxy for stored text volume, not ChromaDB disk bytes. The last column is **relative to the 400/50 index**, not source-normalized overlap amplification. Strict source-normalized amplification (`sum(stored chunk words) / sum(extracted source words before overlap)`) remains unmeasured because a reliable unduplicated source-word denominator was not captured. The read-only test output printed Recall@5 and stored-word totals; per-question retrieval traces and Recall@3 were not captured in this experimental export. This evaluation measures retrieval, **not** end-to-end answer quality for each alternative index.
 
-Current `CACHE_THRESHOLD=0.95` is a selected setting, but the requirement to compare thresholds and demonstrate a false hit is not yet experimentally satisfied. Evaluate at least 0.85, 0.90, and 0.95 on pairs of nearly identical but semantically different rules, with a fresh cache namespace between cases. Record the exact false hit, threshold, and final lowest-safe threshold. Cache hits and misses are available through `/metrics`.
+The student's preserved local evidence is `docs/CHUNKING-ABLATION-RESULTS.md` and `docs/chunking-ablation-results.json`. Indexer completion logs show `"indexer finished"` for both alternative Jobs. The first attempt at 200/25 failed when the Windows Ollama server was unavailable; the successful 200/25 Job was a fresh retry after the API pod confirmed an HTTP 200 and a 768-dimensional test embedding.
+
+## E. Cache-threshold experiment — observed 11 November 2026
+
+A controlled **component-level** experiment exercised RAHBAR's `SemanticCache` with the real Redis backend and `nomic-embed-text` embeddings from Ollama. Similar-looking questions with intentionally different expected answers were probed against three cosine-similarity thresholds. Production `CACHE_THRESHOLD` remained unchanged.
+
+| Threshold | False semantic-cache hits on tested probes |
+| ---: | ---: |
+| 0.85 | 3 |
+| 0.90 | 2 |
+| **0.95** | **0** |
+
+Thus, `0.95` was the **lowest tested threshold with zero observed false hits in this controlled probe set**. This justifies retaining the existing production default of `0.95` for the tested workload, but cannot prove the cache will never produce a false hit. The probe used controlled answer fixtures; it was not a full `/api/ask` generative accuracy test. The local outputs are `docs/cache-threshold-experiment.json` and `docs/CACHE-THRESHOLD-EXPERIMENT.md`. Treat their detailed cases as the primary evidence for exactly which questions were mistaken at lower thresholds.
+
+## F. Remaining evidence and submission limitations
+
+Four *deliberate* extraction/chunking/retrieval/source controlled failures, with before/after scores, are still pending in `docs/FAILURE-ANALYSIS.md`. Earlier real incidents (including indexer OOMKilled, wrong-version/rule answers and an unavailable Ollama server) are diagnostic evidence but should not be presented as completed controlled experiments. The full baseline 15-question API evaluation previously passed; the chunking comparison above instead evaluates top-five retrieval only.
