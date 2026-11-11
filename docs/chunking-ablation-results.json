@@ -1,0 +1,46 @@
+{
+  "title": "RAHBAR chunking ablation verified results",
+  "date": "2026-11-11",
+  "method": "Reported by deployed RAHBAR ChromaRetriever read-only evaluation of existing ChromaDB collections against eval/golden.yaml; 13 questions with relevant passages.",
+  "source_of_measurements": "Observed CMD output from November 11 2026; raw per-question results unavailable because evaluator did not finish saving its output.",
+  "results": [
+    {
+      "setting": "200/25",
+      "collection": "rahbar_ablation_200_25",
+      "chunks": 764,
+      "stored_chunk_words": 78808,
+      "indexed_words_relative_to_400_50": 1.039917,
+      "recall_at_5": 1.0,
+      "retrieval_questions": 13,
+      "indexer_seconds": 129.4,
+      "recall_at_3": null
+    },
+    {
+      "setting": "400/50",
+      "collection": "rahbar",
+      "chunks": 597,
+      "stored_chunk_words": 75783,
+      "indexed_words_relative_to_400_50": 1.0,
+      "recall_at_5": 1.0,
+      "retrieval_questions": 13,
+      "indexer_seconds": null,
+      "recall_at_3": null
+    },
+    {
+      "setting": "600/75",
+      "collection": "rahbar_ablation_600_75",
+      "chunks": 557,
+      "stored_chunk_words": 73933,
+      "indexed_words_relative_to_400_50": 0.975588,
+      "recall_at_5": 1.0,
+      "retrieval_questions": 13,
+      "indexer_seconds": 139.1,
+      "recall_at_3": null
+    }
+  ],
+  "notes": [
+    "Recall@3 was not printed and is not claimed.",
+    "Indexed-words ratios compare to 400/50 baseline; source-normalized amplification not measured.",
+    "Baseline indexer duration was not established in this experiment."
+  ]
+}
