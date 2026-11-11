@@ -1,0 +1,158 @@
+{
+  "method": "Isolated Redis cache-store/lookup probe using production SemanticCache, real Ollama vectors and a controlled cached response fixture; not end-to-end API requests.",
+  "embedding_model": "nomic-embed-text",
+  "probe_count": 10,
+  "thresholds": [
+    0.85,
+    0.9,
+    0.95
+  ],
+  "false_hit_counts": {
+    "0.85": 3,
+    "0.90": 2,
+    "0.95": 0
+  },
+  "lowest_zero_false_hit_threshold_in_test_set": 0.95,
+  "cases": [
+    {
+      "id": "P01",
+      "topic": "summer versus regular course limits",
+      "a": "Under current FAST-NUCES rules, what is the maximum number of courses in a summer semester?",
+      "a_answer": "Two courses.",
+      "b": "Under current FAST-NUCES rules, what is the maximum number of courses in a regular semester?",
+      "b_answer": "Five courses normally.",
+      "cosine_similarity": 0.937366,
+      "false_hit_by_threshold": {
+        "0.85": true,
+        "0.90": true,
+        "0.95": false
+      }
+    },
+    {
+      "id": "P02",
+      "topic": "summer versus regular course limits, alternate phrasing",
+      "a": "How many courses may a FAST-NUCES student register for during a summer semester?",
+      "a_answer": "Two courses.",
+      "b": "How many courses may a FAST-NUCES student register for during a regular semester?",
+      "b_answer": "Five courses normally.",
+      "cosine_similarity": 0.938103,
+      "false_hit_by_threshold": {
+        "0.85": true,
+        "0.90": true,
+        "0.95": false
+      }
+    },
+    {
+      "id": "P03",
+      "topic": "required attendance versus condonable absence",
+      "a": "Under FAST-NUCES rules, what percentage attendance is required in lectures and labs?",
+      "a_answer": "100% attendance required.",
+      "b": "Under FAST-NUCES rules, what percentage absence may be condoned for genuine reasons?",
+      "b_answer": "Up to 20% absence may be condoned.",
+      "cosine_similarity": 0.801565,
+      "false_hit_by_threshold": {
+        "0.85": false,
+        "0.90": false,
+        "0.95": false
+      }
+    },
+    {
+      "id": "P04",
+      "topic": "attendance versus exception, close phrasing",
+      "a": "What is the FAST-NUCES attendance percentage requirement for a course?",
+      "a_answer": "100% attendance required.",
+      "b": "What is the FAST-NUCES absence percentage that can be condoned for a course?",
+      "b_answer": "Up to 20% absence may be condoned.",
+      "cosine_similarity": 0.868165,
+      "false_hit_by_threshold": {
+        "0.85": true,
+        "0.90": false,
+        "0.95": false
+      }
+    },
+    {
+      "id": "P05",
+      "topic": "semester freeze versus summer courses",
+      "a": "Under FAST-NUCES rules, how many semesters may a student freeze?",
+      "a_answer": "Two semesters.",
+      "b": "Under FAST-NUCES rules, how many courses may a student take in summer?",
+      "b_answer": "Two courses, not semesters.",
+      "cosine_similarity": 0.785412,
+      "false_hit_by_threshold": {
+        "0.85": false,
+        "0.90": false,
+        "0.95": false
+      }
+    },
+    {
+      "id": "P06",
+      "topic": "current withdrawal versus extra course rule",
+      "a": "According to current June 2026 FAST-NUCES Rule 4.25, when is the course withdrawal deadline?",
+      "a_answer": "Last day of the makeup week.",
+      "b": "According to current June 2026 FAST-NUCES Rule 4.3, who may register for an extra regular-semester course?",
+      "b_answer": "Eligible final-year students.",
+      "cosine_similarity": 0.766864,
+      "false_hit_by_threshold": {
+        "0.85": false,
+        "0.90": false,
+        "0.95": false
+      }
+    },
+    {
+      "id": "P07",
+      "topic": "minimum CGPA versus attendance minimum",
+      "a": "What is the minimum CGPA required for bachelor graduation under FAST-NUCES rules?",
+      "a_answer": "2.00 CGPA.",
+      "b": "What is the minimum attendance percentage required for lectures under FAST-NUCES rules?",
+      "b_answer": "100% attendance.",
+      "cosine_similarity": 0.726704,
+      "false_hit_by_threshold": {
+        "0.85": false,
+        "0.90": false,
+        "0.95": false
+      }
+    },
+    {
+      "id": "P08",
+      "topic": "academic warning versus withdrawal",
+      "a": "Under June 2026 FAST-NUCES academic rules, what minimum CGPA avoids academic warning?",
+      "a_answer": "2.00 CGPA.",
+      "b": "Under June 2026 FAST-NUCES academic rules, what is the deadline to withdraw from a course?",
+      "b_answer": "Last day of makeup week.",
+      "cosine_similarity": 0.738579,
+      "false_hit_by_threshold": {
+        "0.85": false,
+        "0.90": false,
+        "0.95": false
+      }
+    },
+    {
+      "id": "P09",
+      "topic": "maximum summer courses versus maximum freeze semesters",
+      "a": "What is the maximum number of courses allowed in summer at FAST-NUCES?",
+      "a_answer": "Two summer courses.",
+      "b": "What is the maximum number of semesters a student may freeze at FAST-NUCES?",
+      "b_answer": "Two semesters.",
+      "cosine_similarity": 0.785208,
+      "false_hit_by_threshold": {
+        "0.85": false,
+        "0.90": false,
+        "0.95": false
+      }
+    },
+    {
+      "id": "P10",
+      "topic": "regular maximum versus final-year exception",
+      "a": "Under current FAST-NUCES rules, what is the regular-semester course limit for most students?",
+      "a_answer": "Five courses normally.",
+      "b": "Under current FAST-NUCES rules, who is eligible for a sixth regular-semester course?",
+      "b_answer": "Final-year students.",
+      "cosine_similarity": 0.828909,
+      "false_hit_by_threshold": {
+        "0.85": false,
+        "0.90": false,
+        "0.95": false
+      }
+    }
+  ]
+}
