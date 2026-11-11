@@ -1,5 +1,7 @@
 # RAHBAR — grounded university-policy RAG on Kubernetes
 
+[![CI](https://github.com/izumi622/SCD_ASSIGNMENT_2_RAHBAR/actions/workflows/ci.yml/badge.svg)](https://github.com/izumi622/SCD_ASSIGNMENT_2_RAHBAR/actions/workflows/ci.yml)
+
 RAHBAR is a question-answering service for the publicly available FAST-NUCES corpus. The Python **indexer** extracts/OCRs official PDF documents and HTML pages, chunks the text by document structure, embeds it with a pinned model, and writes versioned evidence to ChromaDB. The **API** retrieves evidence, uses Ollama/Qwen2.5 to answer under a structured schema, checks citation metadata and numeric evidence, and abstains when support is missing. **Redis** caches suitable grounded responses. **nginx** serves the chat UI through Ingress.
 
 **Observed local result, 8 November 2026:** nine university documents were indexed into **597 chunks**; the student's live `extract1` application returned a healthy `/readyz`. The final evaluation on the student's machine reported **15/15 automated answer checks, recall@3 = 1.0, recall@5 = 1.0, citation metadata validity = 1.0, abstention correctness = 1.0, and 0 errors**. This was partly a warm-cache test; the grading report should distinguish retrieved-evidence checks from an independent manual factuality assessment. Commit the **newest** `eval/results.json` and `eval/baseline.json` from your own machine (an older ZIP may contain older results).
